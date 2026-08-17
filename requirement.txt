@@ -1,0 +1,9 @@
+%%writefile "/content/pneumonia_prediction/requirement.txt"
+streamlit
+tensorflow
+pydicom
+opencv-python-headless
+pandas
+numpy
+matplotlib
+pillow
