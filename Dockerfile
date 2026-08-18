@@ -14,9 +14,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Copy the application script and the pre-trained model into the container
+# 3. Copy the app script and ALL split model pieces into the container
 COPY app.py .
-COPY ResNet50_model.keras .
+COPY ResNet50_model.keras.part-* .
+
+# Recombine the parts into the single .keras model file, then delete the chunks
+RUN cat ResNet50_model.keras.part-* > ResNet50_model.keras && rm ResNet50_model.keras.part-*
 
 # 4. Expose the default Streamlit port
 EXPOSE 8501
