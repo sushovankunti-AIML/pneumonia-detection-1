@@ -3,19 +3,21 @@ import tensorflow as tf
 import pydicom
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 
-# Configure the Streamlit page
 st.set_page_config(page_title="Pneumonia Detection App", layout="centered")
 
-# Load the model once and cache it to prevent reloading on every interaction
+# Keep it simple: Streamlit and Docker know exactly where this file is now!
 @st.cache_resource
 def load_model():
-    # Load your trained ResNet50 model
     return tf.keras.models.load_model('ResNet50_model.keras')
 
-model = load_model()
+try:
+    model = load_model()
+    model_loaded = True
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    model_loaded = False
 
 st.title("Pneumonia Detection from Chest X-Rays")
 st.write("Upload a DICOM (.dcm) or standard image file to predict the probability of pneumonia.")
