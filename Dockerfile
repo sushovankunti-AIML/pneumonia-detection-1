@@ -1,5 +1,5 @@
 # 1. Specify a suitable base image
-FROM python:3.9-slim-buster
+FROM python:3.9-slim-bookworm
 
 # 2. Install system dependencies required for OpenCV and other packages
 RUN apt-get update && apt-get install -y \
