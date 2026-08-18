@@ -10,19 +10,17 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file and install Python dependencies
+# Install wget to handle the download
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Copy the app script and ALL split model pieces into the container
 COPY app.py .
-COPY ResNet50_model.keras.part-* .
 
-# Recombine the parts into the single .keras model file, then delete the chunks
-RUN cat ResNet50_model.keras.part-* > ResNet50_model.keras && rm ResNet50_model.keras.part-*
+# Download the model directly from your hosting link during the build
+RUN wget -O ResNet50_model.keras https://huggingface.co/Sushovankunti/pneumonia-detection-1/blob/main/ResNet50_model.keras
 
-# 4. Expose the default Streamlit port
+# Expose port and set entrypoint
 EXPOSE 8501
-
-# 5. Define the entry point to run the Streamlit application
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
