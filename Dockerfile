@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 
 # Download the model directly from your hosting link during the build
-RUN wget -O ResNet50_model.keras "https://huggingface.co/Sushovankunti/pneumonia-detection-1/blob/main/ResNet50_model.keras"
+RUN wget -O ResNet50_model.keras "https://huggingface.co/Sushovankunti/pneumonia-detection-1/resolve/main/ResNet50_model.keras?download=true"
 
 # Expose port and set entrypoint
 EXPOSE 8501
