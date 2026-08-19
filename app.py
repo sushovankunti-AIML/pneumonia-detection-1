@@ -4,13 +4,38 @@ import pydicom
 import cv2
 import numpy as np
 from PIL import Image
+import os
+import urllib.request
 
 st.set_page_config(page_title="Pneumonia Detection App", layout="centered")
 
-# Keep it simple: Streamlit and Docker know exactly where this file is now!
+# This will print the version on your web app so we KNOW it updated
+st.caption(f"Running TensorFlow Version: {tf.__version__}")
+
+# THE FIX: Intercept Keras's configuration dictionary BEFORE it reads it
+class SafeDense(tf.keras.layers.Dense):
+    @classmethod
+    def from_config(cls, config):
+        # Safely remove the troublemaking parameter
+        config.pop('quantization_config', None)
+        return super().from_config(config)
+
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model('ResNet50_model.keras')
+    model_path = 'ResNet50_model.keras'
+    model_url = "https://huggingface.co/Sushovankunti/pneumonia-detection-1/resolve/main/ResNet50_model.keras?download=true"
+    
+    if not os.path.exists(model_path):
+        with st.spinner("Downloading 3.5 GB AI Model..."):
+            urllib.request.urlretrieve(model_url, model_path)
+            
+    # Load the model and force it to use our SafeDense class
+    return tf.keras.models.load_model(
+        model_path, 
+        custom_objects={'Dense': SafeDense}, 
+        compile=False,
+        safe_mode=False
+    )
 
 try:
     model = load_model()
@@ -36,7 +61,8 @@ if uploaded_file is not None:
             img_raw = np.array(image)
 
         # 5. Display the original image
-        st.image(img_raw, caption='Uploaded X-Ray', use_container_width=True, clamp=True)
+        #st.image(img_raw, caption='Uploaded X-Ray', use_container_width=True, clamp=True)
+        st.image(img_raw, caption="Uploaded X-Ray", use_column_width=True)
 
         # 2. Preprocess the uploaded image
         # Resize to 512x512
