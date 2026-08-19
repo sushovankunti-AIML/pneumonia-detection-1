@@ -1,0 +1,3 @@
+*.keras
+*.part-*
+__pycache__/
