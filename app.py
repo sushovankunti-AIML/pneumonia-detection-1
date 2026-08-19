@@ -8,17 +8,20 @@ import os
 import urllib.request
 
 st.set_page_config(page_title="Pneumonia Detection App", layout="centered")
-
-# This will print the version on your web app so we KNOW it updated
 st.caption(f"Running TensorFlow Version: {tf.__version__}")
 
-# THE FIX: Intercept Keras's configuration dictionary BEFORE it reads it
-class SafeDense(tf.keras.layers.Dense):
-    @classmethod
-    def from_config(cls, config):
-        # Safely remove the troublemaking parameter
-        config.pop('quantization_config', None)
-        return super().from_config(config)
+# --- THE ULTIMATE FIX: MONKEY-PATCH TENSORFLOW ---
+# 1. Save the original Dense initialization function
+original_dense_init = tf.keras.layers.Dense.__init__
+
+# 2. Create a fake initialization function that destroys the bad parameter
+def safe_dense_init(self, *args, **kwargs):
+    kwargs.pop('quantization_config', None) # Silently delete it!
+    original_dense_init(self, *args, **kwargs) # Pass everything else to the real Keras
+
+# 3. Overwrite the TensorFlow library's code in memory with our fake one
+tf.keras.layers.Dense.__init__ = safe_dense_init
+# -------------------------------------------------
 
 @st.cache_resource
 def load_model():
@@ -29,13 +32,8 @@ def load_model():
         with st.spinner("Downloading 3.5 GB AI Model..."):
             urllib.request.urlretrieve(model_url, model_path)
             
-    # Load the model and force it to use our SafeDense class
-    return tf.keras.models.load_model(
-        model_path, 
-        custom_objects={'Dense': SafeDense}, 
-        compile=False,
-        safe_mode=False
-    )
+    # Load the model normally - our Monkey-Patch will protect it automatically!
+    return tf.keras.models.load_model(model_path, compile=False)
 
 try:
     model = load_model()
@@ -43,6 +41,7 @@ try:
 except Exception as e:
     st.error(f"Error loading model: {e}")
     model_loaded = False
+    
 
 st.title("Pneumonia Detection from Chest X-Rays")
 st.write("Upload a DICOM (.dcm) or standard image file to predict the probability of pneumonia.")
